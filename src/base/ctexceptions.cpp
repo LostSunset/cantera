@@ -72,6 +72,13 @@ string ArraySizeError::getMessage() const
 
 string IndexError::getMessage() const
 {
+    if (mmax_ == npos) {
+        return fmt::format("IndexError: index {} given, but array{} is empty.",
+                           m_, arrayName_.empty() ? arrayName_ : " "+arrayName_);
+    }
+    if (arrayName_ == "") {
+        return fmt::format("IndexError: {} outside valid range of 0 to {}.", m_, mmax_);
+    }
     return fmt::format("IndexError: {}[{}] outside valid range of 0 to {}.",
                        arrayName_, m_, mmax_);
 }
