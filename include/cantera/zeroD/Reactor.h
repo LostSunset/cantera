@@ -66,6 +66,10 @@ public:
         return true;
     }
 
+    void setInitialVolume(double vol) override {
+        m_vol = vol;
+    }
+
     void setChemistry(bool cflag=true) override {
         m_chem = cflag;
     }
@@ -145,13 +149,11 @@ public:
     //! Set the state of the reactor to correspond to the state vector *y*.
     virtual void updateState(double* y);
 
-    //! Number of sensitivity parameters associated with this reactor
+    //! Number of sensitivity parameters associated with this reactor.
     //! (including walls)
-    virtual size_t nSensParams() const;
+    size_t nSensParams() const override;
 
-    //! Add a sensitivity parameter associated with the reaction number *rxn*
-    //! (in the homogeneous phase).
-    virtual void addSensitivityReaction(size_t rxn);
+    void addSensitivityReaction(size_t rxn) override;
 
     //! Add a sensitivity parameter associated with the enthalpy formation of
     //! species *k* (in the homogeneous phase)
@@ -228,6 +230,8 @@ public:
     virtual bool preconditionerSupported() const {return false;};
 
 protected:
+    //! @deprecated To be removed after %Cantera 3.2. Use constructor with
+    //!     Solution object instead.
     void setKinetics(Kinetics& kin) override;
 
     //! Return the index in the solution vector for this reactor of the species
@@ -272,7 +276,6 @@ protected:
 
     double m_Qdot = 0.0; //!< net heat transfer into the reactor, through walls [W]
 
-    double m_mass = 0.0; //!< total mass
     vector<double> m_work;
 
     //! Production rates of gas phase species on surfaces [kmol/s]
@@ -286,9 +289,6 @@ protected:
     size_t m_nv_surf; //!!< Number of variables associated with reactor surfaces
 
     vector<double> m_advancelimits; //!< Advance step limit
-
-    // Data associated each sensitivity parameter
-    vector<SensitivityParameter> m_sensParams;
 
     //! Vector of triplets representing the jacobian
     vector<Eigen::Triplet<double>> m_jac_trips;
