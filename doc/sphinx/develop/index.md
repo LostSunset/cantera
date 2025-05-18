@@ -54,6 +54,7 @@ reactor-integration
 - [](running-tests)
 - [](writing-examples)
 - [](doc-formatting)
+- [](continuous-integration)
 
 ```{toctree}
 :caption: Adding New Features to Cantera
@@ -66,6 +67,26 @@ writing-tests
 running-tests
 writing-examples
 doc-formatting
+continuous-integration
+```
+
+## Generated API Code
+
+- [](sourcegen)
+- [](sourcegen-config)
+- [](clib-extensions)
+- [](dotnet-extensions)
+- [](yaml-extensions)
+
+```{toctree}
+:caption: Generated API Code
+:hidden:
+
+sourcegen
+sourcegen-config
+clib-extensions
+dotnet-extensions
+yaml-extensions
 ```
 
 (sec-distributing)=
