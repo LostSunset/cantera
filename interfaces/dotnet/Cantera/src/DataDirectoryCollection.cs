@@ -11,13 +11,13 @@ namespace Cantera;
 /// </summary>
 public class DataDirectoryCollection : IReadOnlyList<DirectoryInfo>
 {
-    unsafe static IEnumerable<DirectoryInfo> GetDirs()
+    static IEnumerable<DirectoryInfo> GetDirs()
     {
         const char sep = ';';
 
         return InteropUtil
             .GetString(500, (size, buffer) =>
-                LibCantera.ct_getDataDirectories(sep.ToString(), size, buffer))
+                LibCantera.ct3_getDataDirectories(sep.ToString(), size, buffer))
             .Split(sep)
             .Select(d => new DirectoryInfo(d));
     }
@@ -45,8 +45,7 @@ public class DataDirectoryCollection : IReadOnlyList<DirectoryInfo>
     /// <inheritdoc cref="Add(string)"/>
     public void Add(DirectoryInfo dir)
     {
-        InteropUtil.CheckReturn(LibCantera.ct_addCanteraDirectory(
-            (nuint) dir.FullName.Length, dir.FullName));
+        InteropUtil.CheckReturn(LibCantera.ct3_addCanteraDirectory(dir.FullName));
 
         _dirs.Clear();
         _dirs.AddRange(GetDirs());

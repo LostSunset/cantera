@@ -3,16 +3,11 @@
 ```{caution}
 The auto-generated .NET API is an experimental part of Cantera and may be changed or
 removed without notice.
-
-The current .NET API implementation is an early automated code generation prototype.
-It parses CLib header files rather than generating CLib specifications from Doxygen as
-described for the generic sourcegen [automated code generation](sec-sourcegen-details)
-approach. The language-specific source generation is incomplete but stable.
 ```
 
-The .NET API is written in C# and supports .NET Standard 2.0 (for the primary project)
-and .NET 8 (and newer) on all platforms that support both .NET and the Cantera C++
-library. The .NET interface requires an installation of the .NET 8.0 SDK.
+The .NET API is written in C# and supports .NET 8 (and newer) on all platforms
+that support both .NET and the Cantera C++ library. The .NET interface requires an
+installation of the .NET 8.0 SDK to build.
 
 The .NET API implementation draws on two parts:
 
@@ -25,8 +20,8 @@ The .NET API implementation draws on two parts:
 (sec-sourcegen-dotnet-install)=
 ## Building the .NET Interface
 
-After [building the main Cantera library](sec-compiling), switch to the
-`interfaces/dotnet` directory and run
+After [building the main Cantera library](sec-compiling) with the option
+`clib_experimental=y`, switch to the `interfaces/dotnet` directory and run
 
 ```bash
 dotnet build
@@ -38,9 +33,11 @@ The .NET test suite is invoked by running
 dotnet test
 ```
 
-In order to force re-import of generated code from sourcegen, a manual deletion of
-`obj` and `bin` folders in `Cantera`, `Cantera.Tests`, `examples/Applications` and
-`examples/Soundspeed` may be necessary.
+In order to force re-import of generated code from sourcegen, run
+
+```bash
+dotnet clean
+```
 
 (sec-sourcegen-dotnet-generation)=
 ### C# Code Generation
@@ -50,10 +47,12 @@ C# files used by the .NET API can be generated for informational purposes by run
 following command from the root folder of the Cantera source code:
 
 ```bash
-python interfaces/sourcegen/run.py --api=csharp --output=build/csharp
+sourcegen --api=csharp --output=build/csharp
 ```
 
-Auto-generated C# files are placed in the output folder `build/csharp`.
+Auto-generated C# files are placed in the output folder `build/csharp`. Note that this
+step requires installation of sourcegen via
+`python -m pip install -e interfaces/sourcegen`.
 
 ## .NET Source Generator Overview
 
@@ -62,8 +61,8 @@ the native Cantera library via the Cantera C interface (CLib), and wraps the low
 interfaces with classes and concepts familiar to a .NET developer. As part of the build
 process, it invokes [sourcegen](sourcegen) to scaffold the interop code and some of the
 code for the wrapper objects, such as simple properties which can mapped directly to
-CLib getter and setter functions. `Cantera.csproj` targets .NET Standard 2.0 and .NET 8.
-This project will be released as a NuGet package.
+CLib getter and setter functions. `Cantera.csproj` targets .NET 8. This project will be
+released as a NuGet package.
 
 `Cantera.Tests.csproj` contains the unit tests for the Cantera .NET library and targets
 .Net 8.

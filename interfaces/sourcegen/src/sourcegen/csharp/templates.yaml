@@ -1,0 +1,42 @@
+# Definitions used for Jinja template replacement.
+
+# This file is part of Cantera. See License.txt in the top-level directory or
+# at https://cantera.org/license.txt for license and copyright information.
+
+csharp-interop-func: |-
+  [LibraryImport(LibFile{{ ', StringMarshalling = StringMarshalling.Utf8' if has_string_param }})]
+  public static partial {{ declaration }};
+
+csharp-base-handle: |-
+  [NativeMarshalling(typeof(Marshaller<{{ class_name }}>))]
+  class {{ class_name }} : CanteraHandle
+  {
+      protected override void Close() =>
+          LibCantera.{{ release_func_name }}(this);
+  }
+
+csharp-derived-handle: |-
+  [NativeMarshalling(typeof(Marshaller<{{ derived_class_name }}>))]
+  class {{ derived_class_name }} : {{ base_class_name }} { }
+
+csharp-property-int-double: |-
+  public {{ prop_type }} {{ cs_name }}
+  {
+      get => InteropUtil.CheckReturn(
+          LibCantera.{{ getter }}(_handle));
+      {%- if setter %}
+      set => InteropUtil.CheckReturn(
+          LibCantera.{{ setter }}(_handle, value));
+      {%- endif %}
+  }
+
+csharp-property-string: |-
+  public string {{ cs_name }}
+  {
+      get => InteropUtil.GetString(40, (length, buffer) =>
+          LibCantera.{{ getter }}(_handle, length, buffer));
+      {% if setter -%}
+      set => InteropUtil.CheckReturn(
+          LibCantera.{{ setter }}(_handle, value));
+      {%- endif %}
+  }

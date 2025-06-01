@@ -1,6 +1,7 @@
 // This file is part of Cantera. See License.txt in the top-level directory or
 // at https://cantera.org/license.txt for license and copyright information.
 
+using System.Runtime.InteropServices.Marshalling;
 using Cantera.Interop;
 
 namespace Cantera;
@@ -34,14 +35,20 @@ public class LogMessageEventArgs
 /// </remarks>
 public static class Application
 {
-    static Application()
+    static unsafe Application()
     {
         s_invokeMessageLoggedDelegate = (level, category, message) =>
         {
             try
             {
+                var categoryStr = Utf8StringMarshaller.ConvertToManaged(category);
+                var messageStr = Utf8StringMarshaller.ConvertToManaged(message);
+
+                ArgumentNullException.ThrowIfNull(categoryStr, nameof(category));
+                ArgumentNullException.ThrowIfNull(messageStr, nameof(message));
+
                 MessageLogged
-                    ?.Invoke(null, new LogMessageEventArgs(level, category, message));
+                    ?.Invoke(null, new LogMessageEventArgs(level, categoryStr, messageStr));
             }
             catch (Exception ex)
             {
@@ -50,27 +57,27 @@ public static class Application
         };
 
         InteropUtil.CheckReturn(
-            LibCantera.ct_setLogCallback(s_invokeMessageLoggedDelegate));
+            LibCantera.ct3_setLogCallback(s_invokeMessageLoggedDelegate));
     }
 
     /// <summary>
     /// Represents the delegate that is marshalled to LibCantera as a function pointer.
     /// </summary>
     /// <remarks>
-    /// ct_setLogWriter() needs a delegate which is marshalled as a function pointer to
+    /// ct3_setLogWriter() needs a delegate which is marshalled as a function pointer to
     /// the C++ Cantera library. We could create one implicitly when calling
-    /// <c>LibCantera.ct_setLogWriter(LogMessage)</c>, but the garbage collector would
+    /// <c>LibCantera.ct3_setLogWriter(LogMessage)</c>, but the garbage collector would
     /// not know the native method is using it and could reclaim it. By explicitly
     /// storing it as
     /// a class member, we ensure it is not collected until the class is.
     /// </remarks>
     static readonly LibCantera.LogCallback s_invokeMessageLoggedDelegate;
 
-    unsafe static readonly Lazy<string> s_version =
-        new(() => InteropUtil.GetString(10, LibCantera.ct_getCanteraVersion));
+    static readonly Lazy<string> s_version =
+        new(() => InteropUtil.GetString(10, LibCantera.ct3_getCanteraVersion));
 
-    unsafe static readonly Lazy<string> s_gitCommit =
-        new(() => InteropUtil.GetString(10, LibCantera.ct_getGitCommit));
+    static readonly Lazy<string> s_gitCommit =
+        new(() => InteropUtil.GetString(10, LibCantera.ct3_getGitCommit));
 
     static readonly Lazy<DataDirectoryCollection> s_dataDirectories =
         new(() => new DataDirectoryCollection());

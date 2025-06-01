@@ -43,15 +43,15 @@ public class SpeciesCollection : IReadOnlyList<Species>
     /// in the order in which they appear in this collection. When setting,
     /// normalizes the mass fractions so they sum to 1.
     /// </summary>
-    public unsafe double[] MassFractions
+    public double[] MassFractions
     {
         get => InteropUtil.GetDoubles(_handle, _species.Count,
-            LibCantera.thermo_getMassFractions);
+            LibCantera.thermo3_getMassFractions);
 
         set
         {
-            var retval = LibCantera.thermo_setMassFractions(_handle,
-                (nuint) value.Length, value, InteropConsts.True);
+            var retval = LibCantera.thermo3_setMassFractions(_handle,
+                value.Length, value);
 
             InteropUtil.CheckReturn(retval);
         }
@@ -62,25 +62,25 @@ public class SpeciesCollection : IReadOnlyList<Species>
     /// in the order in which they appear in this collection. When setting,
     /// normalizes the mole fractions so they sum to 1.
     /// </summary>
-    public unsafe double[] MoleFractions
+    public double[] MoleFractions
     {
         get => InteropUtil.GetDoubles(_handle, _species.Count,
-            LibCantera.thermo_getMoleFractions);
+            LibCantera.thermo3_getMoleFractions);
 
         set
         {
-            var retval = LibCantera.thermo_setMoleFractions(_handle,
-                (nuint) value.Length, value, InteropConsts.True);
+            var retval = LibCantera.thermo3_setMoleFractions(_handle,
+                value.Length, value);
 
             InteropUtil.CheckReturn(retval);
         }
     }
 
-    internal unsafe SpeciesCollection(ThermoPhaseHandle handle)
+    internal SpeciesCollection(ThermoPhaseHandle handle)
     {
         _handle = handle;
 
-        var count = (int) InteropUtil.CheckReturn(LibCantera.thermo_nSpecies(handle));
+        var count = InteropUtil.CheckReturn(LibCantera.thermo3_nSpecies(handle));
 
         var pool = MemoryPool<double>.Shared;
 
@@ -88,15 +88,15 @@ public class SpeciesCollection : IReadOnlyList<Species>
         using (pool.Rent(count, out var charges))
         {
             InteropUtil.GetDoubles(handle, molecularWeights,
-                LibCantera.thermo_getMolecularWeights);
-            InteropUtil.GetDoubles(handle, charges, LibCantera.thermo_getCharges);
+                LibCantera.thermo3_getMolecularWeights);
+            InteropUtil.GetDoubles(handle, charges, LibCantera.thermo3_getCharges);
 
             _species = new(count);
 
             for (var i = 0; i < count; i++)
             {
-                int getName(int length, byte* buffer) => LibCantera
-                    .thermo_getSpeciesName(handle, (nuint) i, (nuint) length, buffer);
+                int getName(int length, Span<byte> buffer) => LibCantera
+                    .thermo3_getSpeciesName(handle, i, length, buffer);
 
                 var name = InteropUtil.GetString(10, getName);
 
@@ -249,31 +249,5 @@ public class SpeciesCollection : IReadOnlyList<Species>
 
         throw new InvalidOperationException(
             $"Unknown species! {name} is not present in this collection.");
-    }
-
-    /// <summary>
-    /// Gets or sets the mass fractions for all the species at once,
-    /// in the order in which they appear in this collection,
-    /// but does not normalize them.
-    /// </summary>
-    public void SetUnnormalizedMassFractions(double[] fractions)
-    {
-        var retval = LibCantera.thermo_setMassFractions(_handle,
-            (nuint) fractions.Length, fractions, InteropConsts.False);
-
-        InteropUtil.CheckReturn(retval);
-    }
-
-    /// <summary>
-    /// Gets or sets the mole fractions for all the species at once,
-    /// in the order in which they appear in this collection,
-    /// but does not normalize them.
-    /// </summary>
-    public void SetUnnormalizedMoleFractions(double[] fractions)
-    {
-        var retval = LibCantera.thermo_setMoleFractions(_handle,
-            (nuint) fractions.Length, fractions, InteropConsts.False);
-
-        InteropUtil.CheckReturn(retval);
     }
 }

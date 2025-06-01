@@ -370,9 +370,10 @@ config_options = [
         False),
     BoolOption(
         "clib_experimental",
-        """Build experimental CLib. Requires running 'scons doxygen' and CLib code
-           generation via 'python3 interfaces/sourcegen/run.py --api=clib --output=.'
-           prior to 'scons build' command.
+        """Build experimental CLib. Requires running 'scons doxygen', installation of
+           sourcegen via 'python -m pip install -e interfaces/sourcegen' and CLib code
+           generation via 'sourcegen --api=clib --output=.' prior to the 'scons build'
+           command.
            """,
         False),
     BoolOption(
@@ -1983,6 +1984,12 @@ install(env.RecursiveInstall, '$inst_sampledir/cxx',
         'samples/cxx', exclude=sampledir_excludes)
 install(env.RecursiveInstall, '$inst_sampledir/clib',
         'samples/clib', exclude=sampledir_excludes)
+
+# Install experimental C samples
+if env["clib_experimental"]:
+    SConscript("build/samples/clib_experimental/SConscript")
+    install(env.RecursiveInstall, "$inst_sampledir/clib_experimental",
+            "samples/clib_experimental", exclude=sampledir_excludes)
 
 if env['f90_interface'] == 'y':
     SConscript('build/samples/f77/SConscript')
