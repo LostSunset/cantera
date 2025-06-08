@@ -2,15 +2,14 @@
 # at https://cantera.org/license.txt for license and copyright information.
 
 docstring: |-
-  Auto-generated CLib API for %Cantera's Kinetics class.
-  Partially implements a replacement for CLib's traditional @c ct library.
-prefix: kin3
+  Generated CLib API for Cantera's Kinetics class.
+prefix: kin
 base: Kinetics
 parents: []  # List of parent classes
-derived: {InterfaceKinetics: kin3}  # Specialization/prefix dictionary
+derived: {InterfaceKinetics: kin}  # Specialization/prefix dictionary
 recipes:
 - name: getType
-  implements: kineticsType  # inconsistent API (preexisting)
+  wraps: kineticsType  # inconsistent API (preexisting)
 - name: nReactions
 - name: reaction  # New in Cantera 3.2
   uses: nReactions
@@ -21,8 +20,7 @@ recipes:
   what: accessor
 - name: reactionPhase  # New in Cantera 3.2
 - name: phaseIndex
-- name: nSpecies
-  implements: nTotalSpecies  # inconsistent API (preexisting)
+- name: nTotalSpecies  # Renamed in Cantera 3.2 (previously nSpecies)
 - name: reactantStoichCoeff
 - name: productStoichCoeff
 - name: getFwdRatesOfProgress
@@ -38,15 +36,15 @@ recipes:
 - name: setMultiplier
 - name: isReversible
 - name: speciesIndex
-  implements: kineticsSpeciesIndex(const string&)  # inconsistent API (preexisting)
+  wraps: kineticsSpeciesIndex(const string&)  # inconsistent API (preexisting)
 - name: advanceCoverages
-  implements: advanceCoverages(double)
-- name: getDeltaEnthalpy  # previously: part of getDelta
-- name: getDeltaGibbs  # previously: part of getDelta
-- name: getDeltaEntropy  # previously: part of getDelta
-- name: getDeltaSSEnthalpy  # previously: part of getDelta
-- name: getDeltaSSGibbs  # previously: part of getDelta
-- name: getDeltaSSEntropy  # previously: part of getDelta
+  wraps: advanceCoverages(double)
+- name: getDeltaEnthalpy  # Changed in Cantera 3.2 (previously part of getDelta)
+- name: getDeltaGibbs  # Changed in Cantera 3.2 (previously part of getDelta)
+- name: getDeltaEntropy  # Changed in Cantera 3.2 (previously part of getDelta)
+- name: getDeltaSSEnthalpy  # Changed in Cantera 3.2 (previously part of getDelta)
+- name: getDeltaSSGibbs  # Changed in Cantera 3.2 (previously part of getDelta)
+- name: getDeltaSSEntropy  # Changed in Cantera 3.2 (previously part of getDelta)
 # - name: getSourceTerms  # <--- used by MATLAB interface for "massProdRate"
 # - name: start  # <--- unused except for FORTRAN API
 - name: del

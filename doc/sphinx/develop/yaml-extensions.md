@@ -1,7 +1,7 @@
-# Auto-Generated YAML Output
+# Generated YAML Output
 
 ```{note}
-The auto-generated YAML output summarizes elements of the CLib API in YAML format
+The generated YAML output summarizes elements of the CLib API in YAML format
 and serves for illustration purposes. The YAML source code generator may be used to
 generate diagnostic output as well as a starting point for the creation of additional
 generated language interfaces.
@@ -16,15 +16,15 @@ of individual [recipes](sec-sourcegen-recipes).
 generator documents the CLib getter for molecular weights as follows:
 
 ```yaml
-thermo3_getMolecularWeights:
+thermo_getMolecularWeights:
   brief: Copy the vector of molecular weights into array weights.
   what: getter
-  declaration: int thermo3_getMolecularWeights(int handle, int weightsLen, double* weights)
+  declaration: int32_t thermo_getMolecularWeights(int32_t handle, int32_t weightsLen, double* weights)
   parameters:
     handle: Handle to queried Phase object.
     weightsLen: Length of array reserved for weights.
     weights: Output array of molecular weights (kg/kmol)
-  implements: void Phase::getMolecularWeights(double*)
+  wraps: void Phase::getMolecularWeights(double*)
   uses:
   - size_t Phase::nSpecies()
 ```
@@ -37,7 +37,7 @@ Individual YAML fields represent the following:
 - `declaration`: Full CLib function signature.
 - `parameters`: Mapping of CLib function arguments to respective docstrings.
 - `returns`: Docstring of value returned by CLib function.
-- `implements`: Full signature of C++ function/method/variable implemented by CLib (if
+- `wraps`: Full signature of C++ function/method/variable implemented by CLib (if
   applicable).
 - `uses`: List of auxiliary C++ methods used by the CLib function (if applicable).
 
@@ -50,7 +50,7 @@ Cantera source code:
 scons doxygen && sourcegen --api=yaml --output=build/yaml
 ```
 
-Auto-generated YAML files are placed in the output folder `build/yaml`. Note that this
+Generated YAML files are placed in the output folder `build/yaml`. Note that this
 step requires installation of sourcegen via
 `python -m pip install -e interfaces/sourcegen`.
 
@@ -78,7 +78,7 @@ names of YAML configuration files.
   output. The following files define these templates:
 
     - `templates.yaml`: Defines YAML code blocks within the output files.
-    - `output_template.yaml.in`: Defines the template for output files.
+    - `template_output.yaml.in`: Defines the template for output files.
 
 - **Source Code:** The implementation of the YAML source generator is contained in
   `generator.py`.

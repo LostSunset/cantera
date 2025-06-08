@@ -14,36 +14,24 @@ ignore_funcs: {}
 
 # Return type crosswalks
 ret_type_crosswalk:
-  bool: int
-  void: int
-  int: int
-  size_t: int
+  bool: int32_t
+  void: int32_t
+  int: int32_t
+  size_t: int32_t
+  shared_ptr<T>: int32_t
   double: double
-  const double: double
-  shared_ptr<T>: int
   string: char*
-  const string: char*
-  vector<double>&: double*
-  const vector<double>&: double*
+  vector<double>: double*
 
 # Parameter type crosswalks
-prop_type_crosswalk:
-  bool: int
-  int: int
-  const int*: const int*
-  size_t: int
-  const size_t: int
+par_type_crosswalk:
+  bool: int32_t
+  int: int32_t
+  size_t: int32_t
+  shared_ptr<T>: int32_t
+  int*: int32_t*
+  vector<shared_ptr<T>>: int32_t*
   double: double
-  const double: double
   double*: double*
-  double* const: double*
-  const double*: const double*
-  const double* const: const double*
-  string: const char*
-  const string&: const char*
-  shared_ptr<T>: int
-  const shared_ptr<T>: int
-  vector<double>&: double*
-  const vector<double>&: const double*
-  vector<shared_ptr<T>>&: int[]
-  const vector<shared_ptr<T>>&: int[]
+  vector<double>: double*
+  string: char*

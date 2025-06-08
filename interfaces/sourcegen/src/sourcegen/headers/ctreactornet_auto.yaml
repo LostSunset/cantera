@@ -2,25 +2,24 @@
 # at https://cantera.org/license.txt for license and copyright information.
 
 docstring: |-
-  Auto-generated CLib API for %Cantera's ReactorNet class.
-  Partially implements a replacement for CLib's traditional @c ctreactor library.
-prefix: reactornet3
+  Generated CLib API for Cantera's ReactorNet class.
+prefix: reactornet
 base: ReactorNet
 recipes:
 - name: new
-  implements: newReactorNet
+  wraps: newReactorNet
 - name: setInitialTime
 - name: setMaxTimeStep
 - name: setTolerances
 - name: setSensitivityTolerances
 - name: advance
-  implements: advance(double)
+  wraps: advance(double)
 - name: step
 - name: time
 - name: rtol
 - name: atol
 - name: sensitivity
-  implements: sensitivity(const string&, size_t, int)
+  wraps: sensitivity(const string&, size_t, int)
 # service functions
 - name: del
 - name: cabinetSize

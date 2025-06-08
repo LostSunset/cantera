@@ -1,4 +1,4 @@
-# Auto-Generated CLib Headers
+# Generated CLib Headers
 
 ```{caution}
 The YAML configuration for the **sourcegen** utility is an experimental part of Cantera
@@ -18,7 +18,7 @@ represents annotated CLib functions that form the basis for specific APIs genera
 Each YAML file contains information for CLib headers that implement functions and
 methods built around a specific Cantera class. The following fields are supported:
 
-- `docstring`: Used as part of the docstring of the auto-generated API file.
+- `docstring`: Used as part of the docstring of the generated API file.
 - `prefix`: Prefix used for CLib functions.
 - `base`: Base class of the CLib library; examples: `Solution`, `ThermoPhase`.
     Stand-alone functions defined in the `Cantera` namespace use `""` as a base.
@@ -39,7 +39,7 @@ based on a recipe, which is subsequently used to scaffold API functions using de
     names should start with `new`. As all objects are handled via smart `shared_ptr<>`,
     CLib constructors require C++ utility functions that return a pointer to a new
     object. Constructors with the name `new` will use the C++ default constructor.
-- `accessor`: a CLib accessor adds existing or spawned C++ objects to CLib storage.
+- `accessor`: A CLib accessor adds existing or spawned C++ objects to CLib storage.
 - `destructor`: A CLib destructor removes a C++ object from CLib. Destructor names
     should start with `del`.
 - `getter`: Implements a getter method of a C++ class.
@@ -61,7 +61,9 @@ Recipes include all information required for the auto-generation of a correspond
 CLib function. Each YAML recipe uses the following fields:
 
 - `name`: Name of the CLib function to be generated (without prefix).
-- `implements`: Optional name or signature of the implemented C++ function/method or
+- `brief`: Optional override for brief description from Doxygen documentation.
+- `what`: Optional override for auto-detected recipe/CLib function type.
+- `wraps`: Optional name or signature of the implemented C++ function/method or
     variable. If left empty, *sourcegen* searches for Doxygen tags matching the `name`
     field. A name is sufficient if C++ functions/methods are unique, for example
     `Func1::type`. A signature is required whenever shortened signatures with default
@@ -70,9 +72,13 @@ CLib function. Each YAML recipe uses the following fields:
     it can be inferred based on the fields `base`, `parents` or `derived`.
 - `uses`: Optional list of auxiliary C++ class methods used by the CLib function. The
     exact usage depends on the type of the implemented CLib function.
-- `what`: Optional override for auto-detected recipe/CLib function type.
-- `brief`: Optional override for brief description from Doxygen documentation.
-- `code`: Optional custom code to override auto-generated code (**experimental**).
+
+For custom code, additional fields are required to replace generated information:
+
+- `declaration`: Full CLib declaration.
+- `parameters`: Mapping of parameter doc-strings.
+- `returns`: Return doc-string.
+- `code`: Custom code to be executed.
 
 (sec-sourcegen-headers)=
 ## CLib Header Generator
@@ -94,7 +100,7 @@ modules need to be implemented (see section [](sec-sourcegen-clib-extend)).
 - **Type Crosswalks:** These fields map C++ types to their CLib equivalents.
 
     - `ret_type_crosswalk`: Specifies the types returned by C++ functions and methods.
-    - `prop_type_crosswalk`: Specifies the types passed as parameters in C++ functions
+    - `par_type_crosswalk`: Specifies the types passed as parameters in C++ functions
       and methods.
 
 (sec-sourcegen-headers-details)=

@@ -2,30 +2,29 @@
 # at https://cantera.org/license.txt for license and copyright information.
 
 docstring: |-
-  Auto-generated CLib API for %Cantera's ConnectorNode class.
-  Partially implements a replacement for CLib's traditional @c ctreactor library.
-prefix: connector3
+  Generated CLib API for Cantera's ConnectorNode class.
+prefix: connector
 base: ConnectorNode
 parents: []  # List of parent classes
 derived:  # Specialization/prefix dictionary
-  FlowDevice: flowdev3
-  WallBase: wall3
-  Wall: wall3
+  FlowDevice: flowdev
+  WallBase: wall
+  Wall: wall
 recipes:
 - name: new
-  implements: newConnector
+  wraps: newConnectorNode
 - name: type
 - name: name
 - name: setName
 # FlowDevice
 - name: setPrimary
 - name: massFlowRate
-- name: deviceCoefficient  # new in Cantera 3.2
-- name: setDeviceCoefficient  # new in Cantera 3.2
+- name: deviceCoefficient  # New in Cantera 3.2
+- name: setDeviceCoefficient  # New in Cantera 3.2
 - name: setPressureFunction
-  implements: setPressureFunction(shared_ptr<Func1>)  # alternative is deprecated
+  wraps: setPressureFunction(shared_ptr<Func1>)  # alternative is deprecated
 - name: setTimeFunction
-  implements: setTimeFunction(shared_ptr<Func1>)  # alternative is deprecated
+  wraps: setTimeFunction(shared_ptr<Func1>)  # alternative is deprecated
 # Wall
 - name: expansionRate
 - name: heatRate
@@ -34,10 +33,10 @@ recipes:
 - name: setThermalResistance
 - name: setHeatTransferCoeff
 - name: setHeatFlux
-  implements: setHeatFlux(shared_ptr<Func1>)  # alternative is deprecated
+  wraps: setHeatFlux(shared_ptr<Func1>)  # alternative is deprecated
 - name: setExpansionRateCoeff
 - name: setVelocity
-  implements: setVelocity(shared_ptr<Func1>)  # alternative is deprecated
+  wraps: setVelocity(shared_ptr<Func1>)  # alternative is deprecated
 - name: setEmissivity
 # service functions
 - name: del

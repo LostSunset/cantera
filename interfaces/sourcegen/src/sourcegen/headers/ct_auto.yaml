@@ -2,22 +2,14 @@
 # at https://cantera.org/license.txt for license and copyright information.
 
 docstring: |-
-  The main library of the auto-generated CLib API contains %Cantera service functions.
-  Partially implements a replacement for CLib's traditional @c ct library.
-prefix: ct3
+  The main library of the generated CLib API contains Cantera service functions.
+prefix: ct
 base: ""
 recipes:
-- name: getCanteraVersion
-  implements: version  # inconsistent API (preexisting)
-- name: getGitCommit
-  implements: gitCommit  # inconsistent API (preexisting)
-- name: getCanteraError
-- name: setLogWriter
-- name: setLogCallback
-- name: writeLog
-  implements: writelog_direct  # inconsistent API (preexisting)
-- name: addCanteraDirectory
-  implements: addDirectory  # inconsistent API (preexisting)
+- name: version  # Renamed in Cantera 3.2 (previously getCanteraVersion)
+- name: gitCommit  # Renamed in Cantera 3.2 (previously getGitCommit)
+- name: addDataDirectory
+  wraps: addDirectory  # TODO: Make API consistent (deprecate C++ version)
 - name: getDataDirectories
 - name: findInputFile
 - name: suppress_deprecation_warnings  # inconsistent API (snake_case; preexisting)
@@ -40,9 +32,32 @@ recipes:
 - name: GasConstant
 - name: StefanBoltz
 - name: Faraday
-- name: permeability0
-  implements: permeability_0
-- name: epsilon0
-  implements: epsilon_0
+- name: permeability_0  # Renamed in Cantera 3.2 (previously permeability0)
+- name: epsilon_0  # Renamed in Cantera 3.2 (previously epsilon0)
+- name: getCanteraError
+  brief: Get Cantera error.
+  what: function
+  declaration: int32_t ct_getCanteraError(int32_t bufLen, char* buf)
+  parameters:
+    bufLen: Length of reserved array.
+    buf: String containing Cantera error.
+  returns: Actual length of string or -1 for exception handling.
+  code: |-
+    string err = Application::Instance()->lastErrorMessage();
+    copyString(err, buf, bufLen);
+    return static_cast<int32_t>(err.size());
+- name: setLogCallback
+  brief: Set Logger callback.
+  what: function
+  declaration: int32_t ct_setLogCallback(LogCallback writer)
+  parameters:
+    writer: Callback that is invoked to produce log output.
+  code: |-
+    static unique_ptr<Logger> logwriter;
+    logwriter = make_unique<ExternalLogger>(writer);
+    setLogger(logwriter.get());
+    return 0;
+- name: writeLog
+  wraps: writelog_direct  # inconsistent API (preexisting)
 - name: clearStorage
 - name: resetStorage

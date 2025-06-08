@@ -1,15 +1,15 @@
 /**
  * @file clib_defs.h
  *
- * @warning  This module is an experimental part of the %Cantera API and
- *      may be changed or removed without notice.
+ * @deprecated  Deprecated in %Cantera 3.2 and to be removed thereafter.
+ *      The legacy CLib is superseded by the generated CLib.
  */
 
 // This file is part of Cantera. See License.txt in the top-level directory or
 // at https://cantera.org/license.txt for license and copyright information.
 
-#ifndef CTC_DEFS_H
-#define CTC_DEFS_H
+#ifndef CLIB_DEFS_H
+#define CLIB_DEFS_H  // use same guards as clib_generated
 
 #include "cantera/base/config.h"
 #include <stdlib.h>
@@ -33,7 +33,7 @@ enum LogLevel { INFO, WARN , ERROR };
 
 //! Represents a callback that is invoked to produce log output.
 //! TODO: Only needed in the main CLib library. Should be moved once the
-//! traditional CLib is removed.
+//! legacy CLib is removed.
 typedef void
     (*LogCallback)(enum LogLevel logLevel, const char* category, const char* message);
 

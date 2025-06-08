@@ -2,19 +2,15 @@
 # at https://cantera.org/license.txt for license and copyright information.
 
 docstring: |-
-  Auto-generated CLib API for %Cantera's ThermoPhase class.
-  Partially implements a replacement for CLib's traditional @c ct and
-  @c ctsurf libraries.
-prefix: thermo3
+  Generated CLib API for Cantera's ThermoPhase class.
+prefix: thermo
 base: ThermoPhase
 parents: [Phase]  # List of parent classes
-derived: {SurfPhase: surf3}  # Specialization/prefix dictionary
+derived: {SurfPhase: surf}  # Specialization/prefix dictionary
 recipes:
-- name: getName
-  implements: name  # inconsistent API (preexisting)
+- name: name  # Renamed in Cantera 3.2 (previously getName)
 - name: setName
-- name: getEosType
-  implements: type  # inconsistent API (preexisting)
+- name: type  # Renamed in Cantera 3.2 (previously getEosType)
 - name: nElements
 - name: nSpecies
 - name: temperature
@@ -26,9 +22,9 @@ recipes:
 - name: molarDensity
 - name: meanMolecularWeight
 - name: moleFraction
-  implements: moleFraction(size_t)
+  wraps: moleFraction(size_t)
 - name: massFraction
-  implements: massFraction(size_t)
+  wraps: massFraction(size_t)
 - name: getMoleFractions
   uses: nSpecies
 - name: getMassFractions
@@ -38,20 +34,17 @@ recipes:
 - name: setMassFractions
   uses: nSpecies
 - name: setMoleFractionsByName
-  implements: setMoleFractionsByName(const string&)
+  wraps: setMoleFractionsByName(const string&)
 - name: setMassFractionsByName
-  implements: setMassFractionsByName(const string&)
-- name: getAtomicWeights
+  wraps: setMassFractionsByName(const string&)
+- name: atomicWeights  # Renamed in Cantera 3.2 (previously getAtomicWeights)
   uses: nElements
-  implements: atomicWeights  # inconsistent API (preexisting)
 - name: getMolecularWeights
   uses: nSpecies
 - name: getCharges
   uses: nElements
-- name: getElementName
-  implements: elementName(int)  # inconsistent API (preexisting)
-- name: getSpeciesName
-  implements: speciesName(int)  # inconsistent API (preexisting)
+- name: elementName  # Renamed in Cantera 3.2 (previously getElementName)
+- name: speciesName  # Renamed in Cantera 3.2 (previously getSpeciesName)
 - name: elementIndex
 - name: speciesIndex
 - name: nAtoms
@@ -71,10 +64,8 @@ recipes:
 - name: cp_mass
 - name: cv_mole
 - name: cv_mass
-- name: chemPotentials
-  implements: getChemPotentials  # inconsistent API (preexisting)
-- name: electroChemPotentials
-  implements: getElectrochemPotentials  # inconsistent API (preexisting)
+- name: getChemPotentials  # Renamed in Cantera 3.2 (previously chemPotentials)
+- name: getElectrochemPotentials  # Renamed in Cantera 3.2 (previously electroChemPotentials)
 - name: electricPotential
 - name: setElectricPotential
 - name: thermalExpansionCoeff
@@ -85,39 +76,36 @@ recipes:
 - name: getPartialMolarCp
 - name: getPartialMolarVolumes
 - name: setState_TPX  # New in Cantera 3.2
-  implements: setState_TPX(double, double, const double*)
+  wraps: setState_TPX(double, double, const double*)
 - name: setState_TPY  # New in Cantera 3.2
-  implements: setState_TPY(double, double, const double*)
-- name: set_TP
-  implements: setState_TP(double, double)  # inconsistent API (preexisting)
-- name: set_TD
-  implements: setState_TD(double, double)  # inconsistent API (preexisting)
-- name: set_DP
-  implements: setState_DP(double, double)  # inconsistent API (preexisting)
-- name: set_HP
-  implements: setState_HP(double, double)  # inconsistent API (preexisting)
-- name: set_UV
-  implements: setState_UV(double, double)  # inconsistent API (preexisting)
-- name: set_SV
-  implements: setState_SV(double, double)  # inconsistent API (preexisting)
-- name: set_SP
-  implements: setState_SP(double, double)  # inconsistent API (preexisting)
-- name: set_ST
-  implements: setState_ST(double, double)  # inconsistent API (preexisting)
-- name: set_TV
-  implements: setState_TV(double, double)  # inconsistent API (preexisting)
-- name: set_PV
-  implements: setState_PV(double, double)  # inconsistent API (preexisting)
-- name: set_UP
-  implements: setState_UP(double, double)  # inconsistent API (preexisting)
-- name: set_VH
-  implements: setState_VH(double, double)  # inconsistent API (preexisting)
-- name: set_TH
-  implements: setState_TH(double, double)  # inconsistent API (preexisting)
-- name: set_SH
-  implements: setState_SH(double, double)  # inconsistent API (preexisting)
+  wraps: setState_TPY(double, double, const double*)
+- name: setState_TP  # Renamed in Cantera 3.2 (previously set_TP)
+- name: setState_TD  # Renamed in Cantera 3.2 (previously set_TD)
+- name: setState_DP  # Renamed in Cantera 3.2 (previously set_DP)
+- name: setState_HP  # Renamed in Cantera 3.2 (previously set_HP)
+  wraps: setState_HP(double, double)
+- name: setState_UV  # Renamed in Cantera 3.2 (previously set_UV)
+  wraps: setState_UV(double, double)
+- name: setState_SV  # Renamed in Cantera 3.2 (previously set_SV)
+  wraps: setState_SV(double, double)
+- name: setState_SP  # Renamed in Cantera 3.2 (previously set_SP)
+  wraps: setState_SP(double, double)
+- name: setState_ST  # Renamed in Cantera 3.2 (previously set_ST)
+  wraps: setState_ST(double, double)
+- name: setState_TV  # Renamed in Cantera 3.2 (previously set_TV)
+  wraps: setState_TV(double, double)
+- name: setState_PV  # Renamed in Cantera 3.2 (previously set_PV)
+  wraps: setState_PV(double, double)
+- name: setState_UP  # Renamed in Cantera 3.2 (previously set_UP)
+  wraps: setState_UP(double, double)
+- name: setState_VH  # Renamed in Cantera 3.2 (previously set_VH)
+  wraps: setState_VH(double, double)
+- name: setState_TH  # Renamed in Cantera 3.2 (previously set_TH)
+  wraps: setState_TH(double, double)
+- name: setState_SH  # Renamed in Cantera 3.2 (previously set_SH)
+  wraps: setState_SH(double, double)
 - name: equilibrate
-  implements:
+  wraps:
     ThermoPhase::equilibrate(const string&, const string&, double, int, int, int)
 - name: critTemperature
 - name: critPressure
@@ -129,36 +117,28 @@ recipes:
 - name: setState_Tsat
 - name: getCoverages
 - name: setCoverages
-- name: getConcentrations  # previously: used 'surf' prefix'
-- name: setConcentrations  # previously: used 'surf' prefix'
+- name: getConcentrations  # Changed in Cantera 3.2 (previously used 'surf' prefix')
+- name: setConcentrations  # Changed in Cantera 3.2 (previously used 'surf' prefix')
 - name: siteDensity
 - name: setSiteDensity
 - name: setCoveragesByName
-  implements: setCoveragesByName(const string&)
+  wraps: setCoveragesByName(const string&)
 - name: report
 - name: print
+  brief: Print a summary of the state of the phase to the logger.
   what: method
+  declaration: int32_t thermo_print(int32_t handle, int32_t showThermo, double threshold)
+  parameters:
+    handle: Handle to queried ThermoPhase object.
+    showThermo: If true, extra information is printed out about the thermodynamic state of the system.
+    threshold: Show information about species with mole fractions greater than
+  returns: Zero for success or -1 for exception handling.
+  uses:
+  - virtual string ThermoPhase::report(bool, double)
   code: |-
-    /**
-     *  Print a summary of the state of the phase as a string.
-     *
-     *  @param handle       Handle to queried ThermoPhase object.
-     *  @param showThermo   If true, extra information is printed out about the thermodynamic state of the system.
-     *  @param threshold    Show information about species with mole fractions greater than
-     *  @returns            Zero for success or -1 for exception handling.
-     *
-     *  @uses method: virtual string ThermoPhase::report(bool, double)
-     */
-    int thermo3_print(int handle, int showThermo, double threshold)
-    {
-        try {
-            bool show = (showThermo != 0);
-            writelog(ThermoPhaseCabinet::at(handle)->report(show, threshold));
-            return 0;
-        } catch (...) {
-            return handleAllExceptions(-1, ERR);
-        }
-    }
+    bool show = (showThermo != 0);
+    writelog(ThermoPhaseCabinet::at(handle)->report(show, threshold));
+    return 0;
 - name: del
   what: noop
   brief: Destructor; required by some APIs although object is managed by Solution.

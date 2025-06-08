@@ -80,6 +80,7 @@ from copy import deepcopy
 from packaging.specifiers import SpecifierSet
 from packaging.version import parse as parse_version
 import SCons
+from SCons.Variables.BoolVariable import _text2bool as text2bool
 
 from buildutils import (Option, PathOption, BoolOption, EnumOption, Configuration,
                         logger, remove_directory, remove_file, test_results,
@@ -134,9 +135,9 @@ if "clean" in COMMAND_LINE_TARGETS:
         remove_file(name)
     for name in Path("site_scons").glob("**/*.pyc"):
         remove_file(name)
-    for name in Path("include/cantera/clib_experimental").glob("*.h"):
+    for name in Path("interfaces/clib/include/cantera_clib").glob("ct*.h"):
         remove_file(name)
-    for name in Path("src/clib_experimental").glob("*.cpp"):
+    for name in Path("interfaces/clib/src").glob("ct*.cpp"):
         remove_file(name)
 
     logger.status("Done removing output files.", print_level=False)
@@ -369,12 +370,8 @@ config_options = [
         "Build HTML documentation for Cantera using Sphinx.",
         False),
     BoolOption(
-        "clib_experimental",
-        """Build experimental CLib. Requires running 'scons doxygen', installation of
-           sourcegen via 'python -m pip install -e interfaces/sourcegen' and CLib code
-           generation via 'sourcegen --api=clib --output=.' prior to the 'scons build'
-           command.
-           """,
+        "clib_legacy",
+        "Build the legacy CLib instead of the generated CLib.",
         False),
     BoolOption(
         "run_examples",
@@ -789,7 +786,7 @@ if "help" in COMMAND_LINE_TARGETS:
 
         sys.exit(0)
 
-if "sphinx" in COMMAND_LINE_TARGETS:
+if "sphinx" in COMMAND_LINE_TARGETS or text2bool(ARGUMENTS.get("sphinx_docs", "n")):
     # need to buffer all options before system-dependent selections are applied
     windows_options_full = deepcopy(windows_options)
     config_options_full = deepcopy(config_options)
@@ -1959,6 +1956,11 @@ if env['f90_interface'] == 'y':
     VariantDir('build/src/fortran/', 'src/fortran', duplicate=1)
     SConscript('build/src/fortran/SConscript')
 
+# CLib needs to come before src so generated code is available but we don't want
+# to run this for scons doxygen and scons sphinx
+if not (env["clib_legacy"] or {"doxygen", "sphinx"} & set(COMMAND_LINE_TARGETS)):
+    SConscript("interfaces/clib/SConscript")
+
 VariantDir('build/src', 'src', duplicate=0)
 SConscript('build/src/SConscript')
 
@@ -1977,19 +1979,20 @@ if env['doxygen_docs'] or env['sphinx_docs']:
 VariantDir('build/samples', 'samples', duplicate=0)
 sampledir_excludes = ['\\.o$', '^~$', '\\.in', 'SConscript']
 SConscript('build/samples/cxx/SConscript')
-SConscript('build/samples/clib/SConscript')
 
-# Install C++ / C samples
+# Install C++
 install(env.RecursiveInstall, '$inst_sampledir/cxx',
         'samples/cxx', exclude=sampledir_excludes)
-install(env.RecursiveInstall, '$inst_sampledir/clib',
-        'samples/clib', exclude=sampledir_excludes)
 
-# Install experimental C samples
-if env["clib_experimental"]:
-    SConscript("build/samples/clib_experimental/SConscript")
-    install(env.RecursiveInstall, "$inst_sampledir/clib_experimental",
-            "samples/clib_experimental", exclude=sampledir_excludes)
+# Install C samples
+if env["clib_legacy"]:
+    SConscript('build/samples/clib_legacy/SConscript')
+    install(env.RecursiveInstall, '$inst_sampledir/clib_legacy',
+            'samples/clib_legacy', exclude=sampledir_excludes)
+else:
+    SConscript("build/samples/clib_generated/SConscript")
+    install(env.RecursiveInstall, "$inst_sampledir/clib",
+            "samples/clib_generated", exclude=sampledir_excludes)
 
 if env['f90_interface'] == 'y':
     SConscript('build/samples/f77/SConscript')

@@ -2,26 +2,25 @@
 # at https://cantera.org/license.txt for license and copyright information.
 
 docstring: |-
-  Auto-generated CLib API for %Cantera's Reaction class.
-  Implements an extension of CLib's traditional @c ct library.
-prefix: rxn3
+  Generated CLib API for Cantera's Reaction class.
+prefix: rxn
 base: Reaction
 parents: []  # List of parent classes
 derived: {}  # Specialization/prefix dictionary
 recipes:
 - name: new
-- name: equation  # previously: ctkin_getReactionString
-- name: type  # previously: ctkin_getReactionType
+- name: equation  # Changed in Cantera 3.2 (previously ctkin_getReactionString)
+- name: type  # Changed in Cantera 3.2 (previously ctkin_getReactionType)
 - name: usesThirdBody
 - name: valid
 - name: id
 - name: setId
-  implements: id
+  wraps: id
   what: variable-setter
 - name: allowNonreactantOrders
-  implements: allow_nonreactant_orders
+  wraps: allow_nonreactant_orders
 - name: setAllowNonreactantOrders
-  implements: allow_nonreactant_orders
+  wraps: allow_nonreactant_orders
   what: variable-setter
 - name: del
 - name: cabinetSize

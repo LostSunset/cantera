@@ -60,14 +60,14 @@ interface.
 :text-align: center
 ```
 
-```{grid-item-card} C (traditional)
+```{grid-item-card} C
 :link: clib/index
 :link-type: doc
 :text-align: center
 ```
 
-```{grid-item-card} C (experimental)
-:link: clib_experimental/index
+```{grid-item-card} C (legacy)
+:link: clib_legacy/index
 :link-type: doc
 :text-align: center
 ```
@@ -109,7 +109,7 @@ interface.
 python/index
 cxx/index
 clib/index
-clib_experimental/index
+clib_legacy/index
 matlab_experimental/index
 fortran/index
 input/index

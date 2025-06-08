@@ -7,10 +7,11 @@ import sys
 import logging
 from dataclasses import dataclass
 
+from ruamel import yaml
 from jinja2 import Environment, BaseLoader
 
 from .tagfiles import TagFileParser
-from ..dataclasses import HeaderFile, Param, ArgList, CFunc, Recipe
+from ..dataclasses import HeaderFile, Param, ArgList, Func, Recipe
 from .._helpers import with_unpack_iter
 
 
@@ -24,7 +25,7 @@ class Config:
 
     ret_type_crosswalk: dict[str, str]  #: Return type crosswalks
 
-    prop_type_crosswalk: dict[str, str]  #: Parameter type crosswalks
+    par_type_crosswalk: dict[str, str]  #: Parameter type crosswalks
 
 
 class HeaderGenerator:
@@ -39,7 +40,7 @@ class HeaderGenerator:
         self._clib_bases = bases
 
     def resolve_tags(self, headers_files: list[HeaderFile], root: str) -> None:
-        """Resolve recipe information based on doxygen tags."""
+        """Resolve recipe information based on Doxygen tags."""
         def get_bases() -> tuple[list[str], list[str]]:
             bases = set()
             classes = set()
@@ -60,16 +61,16 @@ class HeaderGenerator:
                 c_funcs.append(self.resolve_recipe(recipe))
             headers.funcs = c_funcs
 
-    def resolve_recipe(self, recipe: Recipe) -> CFunc:
-        """Build CLib header from recipe and doxygen annotations."""
+    def resolve_recipe(self, recipe: Recipe) -> Func:
+        """Build CLib header from recipe and Doxygen annotations."""
         def merge_params(
-                implements: str, cxx_member: CFunc | Param
-            ) -> tuple[list[Param], CFunc]:
+                wraps: str, cxx_member: Func | Param
+            ) -> tuple[list[Param], Func]:
             """Create preliminary CLib argument list."""
             obj_handle = []
-            if "::" in implements:
+            if "::" in wraps:
                 # If class method, add handle as first parameter
-                what = implements.split("::")[0]
+                what = wraps.split("::")[0]
                 obj_handle.append(
                     Param("int", "handle", f"Handle to queried {what} object."))
             if isinstance(cxx_member, Param):
@@ -77,41 +78,46 @@ class HeaderGenerator:
                     return obj_handle + [cxx_member], cxx_member
                 return obj_handle, cxx_member
 
-            if "(" not in implements:
+            if "(" not in wraps:
                 return obj_handle + cxx_member.arglist.params, cxx_member
 
             # Signature may skip C++ default parameters
-            args_short = CFunc.from_str(implements).arglist
+            args_short = Func.from_str(wraps).arglist
             if len(args_short) < len(cxx_member.arglist):
                 cxx_arglist = ArgList(cxx_member.arglist[:len(args_short)])
-                cxx_member = CFunc(cxx_member.ret_type, cxx_member.name,
-                                   cxx_arglist, cxx_member.brief, cxx_member.implements,
-                                   cxx_member.returns, cxx_member.base, cxx_member.uses)
+                cxx_member = Func(cxx_member.ret_type, cxx_member.name,
+                                  cxx_arglist, cxx_member.brief, cxx_member.wraps,
+                                  cxx_member.returns, cxx_member.base, cxx_member.uses)
 
             return obj_handle + cxx_member.arglist.params, cxx_member
 
         func_name = f"{recipe.prefix}_{recipe.name}"
-        reserved = ["cabinetSize", "parentHandle",
-                    "getCanteraError", "setLogWriter", "setLogCallback",
-                    "clearStorage", "resetStorage"]
+        reserved = ["cabinetSize", "parentHandle", "clearStorage", "resetStorage"]
         if recipe.name in reserved:
-            recipe.what = "reserved"
             loader = Environment(loader=BaseLoader)
             msg = f"   generating {func_name!r} -> {recipe.what}"
             _LOGGER.debug(msg)
             header = loader.from_string(
-                self._templates[f"clib-reserved-{recipe.name}-h"]
+                self._templates[f"clib-reserved-{recipe.name}"]
                 ).render(base=recipe.base, prefix=recipe.prefix)
-            return CFunc.from_snippet(header, brief=recipe.brief)
+            reader = yaml.YAML(typ="safe")
+            header = reader.load(header)
+            for key, value in header.items():
+                recipe.__setattr__(key, value)
+            return Func.from_recipe(recipe)
+
+        if recipe.code:
+            # Custom code
+            return Func.from_recipe(recipe)
 
         # Ensure that all functions/methods referenced in recipe are detected correctly
         bases = recipe.bases
-        if not recipe.implements:
-            recipe.implements = self._doxygen_tags.detect(recipe.name, bases)
-        elif recipe.base and "::" not in recipe.implements:
-            parts = list(recipe.implements.partition("("))
+        if not recipe.wraps:
+            recipe.wraps = self._doxygen_tags.detect(recipe.name, bases)
+        elif recipe.base and "::" not in recipe.wraps:
+            parts = list(recipe.wraps.partition("("))
             parts[0] = self._doxygen_tags.detect(parts[0], bases)
-            recipe.implements = "".join(parts)
+            recipe.wraps = "".join(parts)
         recipe.uses = [self._doxygen_tags.detect(uu.split("(")[0], bases, False)
                        for uu in recipe.uses]
 
@@ -120,35 +126,37 @@ class HeaderGenerator:
         args = []
         brief = ""
 
-        if recipe.implements:
+        if recipe.wraps:
             cxx_member = self._doxygen_tags.cxx_member(
-                recipe.implements, recipe.what.endswith("setter"))
+                recipe.wraps, recipe.what.endswith("setter"))
 
             if cxx_member.base in recipe.derived:
                 # Use alternative prefix for class specialization
                 recipe.prefix = recipe.derived.get(cxx_member.base, recipe.prefix)
                 func_name = f"{recipe.prefix}_{recipe.name}"
 
-            msg = f"   generating {func_name!r} -> {recipe.implements}"
+            msg = f"   generating {func_name!r} -> {recipe.wraps}"
             _LOGGER.debug(msg)
 
-            if isinstance(cxx_member, CFunc):
+            if isinstance(cxx_member, Func):
                 # Convert C++ return type to format suitable for crosswalk:
                 # Incompatible return parameters are buffered and appended to back
                 ret_param, buffer_params = self._ret_crosswalk(
                     cxx_member.ret_type, recipe.derived)
-                par_list, cxx_member = merge_params(recipe.implements, cxx_member)
+                par_list, cxx_member = merge_params(recipe.wraps, cxx_member)
                 prop_params = self._prop_crosswalk(par_list)
                 args = prop_params + buffer_params
                 brief = cxx_member.brief
             elif recipe.what == "variable-setter":
-                ret_param = Param("int")
-                par_list, cxx_member = merge_params(recipe.implements, cxx_member)
+                ret_param = Param("int32_t")
+                par_list, cxx_member = merge_params(recipe.wraps, cxx_member)
                 args = self._prop_crosswalk(par_list)
+                if args[-1].p_type == "char*":
+                    args[-1] = Param.to_const(args[-1])
                 brief = cxx_member.description
             else:
                 # Variable getter
-                prop_params, cxx_member = merge_params(recipe.implements, cxx_member)
+                prop_params, cxx_member = merge_params(recipe.wraps, cxx_member)
                 ret_param, buffer_params = self._ret_crosswalk(
                     cxx_member.p_type, recipe.derived)
                 args = prop_params + buffer_params
@@ -182,7 +190,7 @@ class HeaderGenerator:
                     recipe.what = "getter"  # getter assigns to existing array
                 else:
                     recipe.what = "setter"
-            elif any(recipe.implements.startswith(base) for base in recipe.bases):
+            elif any(recipe.wraps.startswith(base) for base in recipe.bases):
                 recipe.what = "method"
             else:
                 msg = f"Unable to auto-detect function type for recipe {recipe.name!r}."
@@ -193,9 +201,9 @@ class HeaderGenerator:
             # No operation
             msg = f"   generating {func_name!r} -> no-operation"
             _LOGGER.debug(msg)
-            args = [Param("int", "handle", f"Handle to {recipe.base} object.")]
+            args = [Param("int32_t", "handle", f"Handle to {recipe.base} object.")]
             brief = "No operation."
-            ret_param = Param("int", "", "Always zero.")
+            ret_param = Param("int32_t", "", "Always zero.")
 
         elif recipe.name == "new":
             # Default constructor
@@ -204,21 +212,17 @@ class HeaderGenerator:
             _LOGGER.debug(msg)
             brief= f"Instantiate {recipe.base} object using default constructor."
             ret_param = Param(
-                "int", "", "Object handle if successful and -1 for exception handling.")
+                "int32_t", "", "Object handle if successful and -1 for exception handling.")
 
         elif recipe.name == "del":
             # Default destructor
             recipe.what = "destructor"
             msg = f"   generating {func_name!r} -> default destructor"
             _LOGGER.debug(msg)
-            args = [Param("int", "handle", f"Handle to {recipe.base} object.")]
+            args = [Param("int32_t", "handle", f"Handle to {recipe.base} object.")]
             brief= f"Delete {recipe.base} object."
             ret_param = Param(
-                "int", "", "Zero for success and -1 for exception handling.")
-
-        elif recipe.code:
-            # Custom code
-            return CFunc.from_snippet(recipe.code, brief=recipe.brief)
+                "int32_t", "", "Zero for success and -1 for exception handling.")
 
         else:
             msg = f"Unable to resolve recipe type for {recipe.name!r}"
@@ -228,8 +232,8 @@ class HeaderGenerator:
         if recipe.brief:
             brief = recipe.brief
         uses = [self._doxygen_tags.cxx_member(uu) for uu in recipe.uses]
-        return CFunc(ret_param.p_type, func_name, ArgList(args), brief, cxx_member,
-                     ret_param.description, None, uses)
+        return Func(ret_param.p_type, func_name, ArgList(args), brief, cxx_member,
+                    ret_param.description, None, uses)
 
     def _handle_crosswalk(
             self, what: str, crosswalk: dict, derived: dict[str, str]) -> str:
@@ -253,29 +257,34 @@ class HeaderGenerator:
     def _ret_crosswalk(
             self, what: str, derived: list[str]) -> tuple[Param, list[Param]]:
         """Crosswalk for return type."""
-        what = what.replace("virtual ", "")
-        if what in self._config.ret_type_crosswalk:
-            ret_type = self._config.ret_type_crosswalk[what]
+        what = what.removeprefix("virtual ")
+        ret_key = what.removeprefix("const ").removesuffix(" const").rstrip("&")
+        if ret_key in self._config.ret_type_crosswalk:
+            ret_type = self._config.ret_type_crosswalk[ret_key]
+            if what.startswith("const "):
+                ret_type = f"const {ret_type}"
             if ret_type == "void":
                 returns = Param(
-                    "int", "", "Zero for success or -1 for exception handling.")
+                    "int32_t", "", "Zero for success or -1 for exception handling.")
                 return returns, []
-            if ret_type == "char*":
+            if ret_type.endswith("char*"):
                 # string expressions require special handling
                 returns = Param(
-                    "int", "", "Actual length of string including string-terminating "
+                    "int32_t", "", "Actual length of string including string-terminating "
                     "null byte, \\0, or -1 for exception handling.")
+                ret_type = ret_type.removeprefix("const ")
                 buffer = [
-                    Param("int", "bufLen", "Length of reserved array.", "in"),
+                    Param("int32_t", "bufLen", "Length of reserved array.", "in"),
                     Param(ret_type, "buf", "Returned string value.", "out")]
                 return returns, buffer
             if ret_type.endswith("*"):
                 # return type involves pointer to reserved buffer
                 returns = Param(
-                    "int", "",
+                    "int32_t", "",
                     "Actual length of value array or -1 for exception handling.")
+                ret_type = ret_type.removeprefix("const ")
                 buffer = [
-                    Param("int", "bufLen", "Length of reserved array.", "in"),
+                    Param("int32_t", "bufLen", "Length of reserved array.", "in"),
                     Param(ret_type, "buf", "Returned array value.", "out")]
                 return returns, buffer
             if not any([what.startswith("shared_ptr"), ret_type.endswith("[]")]):
@@ -289,7 +298,7 @@ class HeaderGenerator:
             handle = self._handle_crosswalk(
                 what, self._config.ret_type_crosswalk, derived)
             returns = Param(
-                "int", "",
+                "int32_t", "",
                 f"Handle to stored {handle} object or -1 for exception handling.")
             return returns, []
 
@@ -305,35 +314,44 @@ class HeaderGenerator:
         params = []
         for par in par_list:
             what = par.p_type
-            if what in self._config.prop_type_crosswalk:
-                if "vector<" in what:
+            par_key = what.removeprefix("const ").removesuffix(" const").rstrip("&")
+            if par_key in self._config.par_type_crosswalk:
+                if "vector<" in par_key:
                     params.append(
-                        Param("int", f"{par.name}Len",
+                        Param("int32_t", f"{par.name}Len",
                               f"Length of vector reserved for {par.name}.", "in"))
-                elif what.endswith("* const") or what.endswith("double*"):
-                    direction = "in" if what.startswith("const") else "out"
+                elif par_key.endswith("*"):
                     params.append(
-                        Param("int", f"{par.name}Len",
-                              f"Length of array reserved for {par.name}.", direction))
-                ret_type = self._config.prop_type_crosswalk[what]
+                        Param("int32_t", f"{par.name}Len",
+                              f"Length of array reserved for {par.name}.", "in"))
+                ret_type = self._config.par_type_crosswalk[par_key]
+                if what.startswith("const "):
+                    ret_type = f"const {ret_type}"
                 params.append(Param(ret_type, par.name, par.description, par.direction))
-            elif "shared_ptr" in what:
+            elif "shared_ptr" in par_key:
                 handle = self._handle_crosswalk(
-                    what, self._config.prop_type_crosswalk, {})
-                if "vector<" in what:
+                    par_key, self._config.par_type_crosswalk, {})
+                par_key = par_key.replace(handle, "T")
+                if "vector<" in par_key:
                     params.append(
-                        Param("int", f"{par.name}Len",
+                        Param("int32_t", f"{par.name}Len",
                               f"Length of array reserved for {par.name}.", "in"))
                     description = f"Memory holding {handle} objects. "
                     description += par.description
-                    params.append(Param("const int*", par.name, description.strip()))
+                    ret_type = self._config.par_type_crosswalk[par_key]
+                    if what.startswith("const "):
+                        ret_type = f"const {ret_type}"
+                    params.append(Param(ret_type, par.name, description.strip()))
                 else:
                     description = f"Integer handle to {handle} object. "
                     description += par.description
+                    ret_type = self._config.par_type_crosswalk[par_key]
+                    if what.startswith("const "):
+                        ret_type = f"const {ret_type}"
                     params.append(
-                        Param("int", par.name, description.strip(), par.direction))
+                        Param(ret_type, par.name, description.strip(), par.direction))
             else:
-                msg = f"Failed crosswalk for argument type {what!r}."
+                msg = f"Failed crosswalk for argument type {par_key!r}."
                 _LOGGER.critical(msg)
                 sys.exit(1)
         return params

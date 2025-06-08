@@ -2,15 +2,14 @@
 # at https://cantera.org/license.txt for license and copyright information.
 
 docstring: |-
-  Auto-generated CLib API for %Cantera's Domain1D class.
-  Partially implements a replacement for CLib's traditional @c ctonedim library.
-prefix: domain3
+  Generated CLib API for Cantera's Domain1D class.
+prefix: domain
 base: Domain1D
 parents: []  # List of parent classes
 derived:  # Specialization/prefix dictionary
-  Boundary1D: bdry3
-  ReactingSurf1D: reactingsurf3
-  Flow1D: flow3
+  Boundary1D: bdry
+  ReactingSurf1D: reactingsurf
+  Flow1D: flow
 recipes:
 - name: newFlow1D
 - name: newBoundary1D
@@ -28,7 +27,7 @@ recipes:
 - name: rtol
 - name: atol
 - name: setupGrid  # Changed in Cantera 3.2
-  implements: setupGrid(const vector<double>&)
+  wraps: setupGrid(const vector<double>&)
 - name: setupUniformGrid  # New in Cantera 3.2
 - name: setID
 - name: grid
@@ -36,7 +35,7 @@ recipes:
 - name: setTemperature
 - name: setSpreadRate
 - name: setMoleFractions
-  implements: setMoleFractions(const string&)
+  wraps: setMoleFractions(const string&)
 - name: mdot
 - name: temperature
 - name: spreadRate
@@ -47,8 +46,7 @@ recipes:
 - name: pressure
 - name: setFixedTempProfile
 - name: solveEnergyEqn
-- name: enableCoverageEqs
-  implements: enableCoverageEquations
+- name: enableCoverageEquations  # Renamed in Cantera 3.2 (previously enableCoverageEqs)
 - name: del
 - name: cabinetSize
 - name: parentHandle

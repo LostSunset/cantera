@@ -9,6 +9,17 @@ clib-param: |-
 clib-comment: |-
   {{ brief }}
 
+  {% if wraps %}
+  Wraps C++ {{ what }}: `{{ wraps }}`
+
+  {% endif %}
+  {% if uses %}
+  Uses:
+  {% for uu in uses %}
+  - `{{ uu }}`
+  {% endfor %}
+
+  {% endif %}
   {% for par in params %}
   {{ par }}
   {% endfor %}
@@ -16,13 +27,6 @@ clib-comment: |-
   {{ '@returns' + 12*' ' + returns }}
   {% endif %}
   {% if params or returns %}
-
-  {% endif %}
-  {% if implements %}
-  {{ '@implements ' + implements }}
-  {% endif %}
-  {% if relates %}
-  {{ '@relates ' + ', '.join(relates) }}
   {% endif %}
 
 clib-definition: |-
@@ -30,7 +34,7 @@ clib-definition: |-
   {{ declaration }};
 
 clib-function: |-
-  // function: {{ cxx_implements }}
+  // function: {{ cxx_wraps }}
   try {
       {% for line in lines %}
       {{ line }}
@@ -53,7 +57,7 @@ clib-function: |-
   }
 
 clib-variable-getter: |-
-  // variable (getter): {{ cxx_implements }}
+  // variable (getter): {{ cxx_wraps }}
   try {
       {% if handle %}
       ## access class member variable
@@ -103,7 +107,7 @@ clib-variable-getter: |-
   }
 
 clib-variable-setter: |-
-  // variable (setter): {{ cxx_implements }}
+  // variable (setter): {{ cxx_wraps }}
   try {
       {% for line in lines %}
       ## add lines used for CLib/C++ variable crosswalk
@@ -124,12 +128,12 @@ clib-variable-setter: |-
       {% endif %}{# handle #}
       return 0;
   } catch (...) {
-      return handleAllExceptions(-1, ERR);
+      return handleAllExceptions({{ error[0] }}, {{ error[1] }});
   }
 
 clib-constructor: |-
   ## CLib constructor template: instantiates new object
-  // constructor: {{ cxx_implements }}
+  // constructor: {{ cxx_wraps }}
   try {
       {% for line in lines %}
       ## add lines used for CLib/C++ variable crosswalk
@@ -157,7 +161,7 @@ clib-constructor: |-
 
 clib-accessor: |-
   ## CLib accessor template: exposes existing C++ object to CLib
-  // accessor: {{ cxx_implements }}
+  // accessor: {{ cxx_wraps }}
   try {
       {% for line in lines %}
       ## add lines used for CLib/C++ variable crosswalk
@@ -229,13 +233,13 @@ clib-destructor: |-
       {{ base }}Cabinet::del({{ handle }});
       return 0;
   } catch (...) {
-      return handleAllExceptions(-1, ERR);
+      return handleAllExceptions({{ error[0] }}, {{ error[1] }});
   }
 
 clib-method: |-
   ## CLib method template:
   ## covers methods as well as getters and setters for scalars
-  // {{ what }}: {{ cxx_implements }}
+  // {{ what }}: {{ cxx_wraps }}
   try {
       {% for line in lines %}
       ## add lines used for CLib/C++ variable crosswalk
@@ -272,7 +276,7 @@ clib-method: |-
 
 clib-array-getter: |-
   ## CLib array getter template
-  // getter: {{ cxx_implements }}
+  // getter: {{ cxx_wraps }}
   try {
       {% if cxx_base == base %}
       ## object can be accessed directly
@@ -299,12 +303,12 @@ clib-array-getter: |-
       return 0;
       {% endif %}
   } catch (...) {
-      return handleAllExceptions(-1, ERR);
+      return handleAllExceptions({{ error[0] }}, {{ error[1] }});
   }
 
 clib-array-setter: |-
   ## CLib array setter template
-  // setter: {{ cxx_implements }}
+  // setter: {{ cxx_wraps }}
   try {
       {% if cxx_base == base %}
       auto& obj = {{ base }}Cabinet::at({{ handle }});
@@ -321,7 +325,7 @@ clib-array-setter: |-
       obj->{{ cxx_name }}({{ cxx_args[0] }});
       return 0;
   } catch (...) {
-      return handleAllExceptions(-1, ERR);
+      return handleAllExceptions({{ error[0] }}, {{ error[1] }});
   }
 
 clib-noop: |-
@@ -330,83 +334,18 @@ clib-noop: |-
 
 clib-custom-code: |-
   // {{ what }}: custom code
-  // *************** begin ***************
-  {% for line in lines %}
-  {{ line }}
-  {% endfor %}
-  // **************** end ****************
+  try {
+      // *************** begin custom code ***************
+      {% for line in lines %}
+      {{ line }}
+      {% endfor %}
+      // **************** end custom code ****************
+  } catch (...) {
+      return handleAllExceptions({{ error[0] }}, {{ error[1] }});
+  }
 
 clib-implementation: |-
   {{ declaration }}
   {
       {{ body | indent(4) }}
-  }
-
-clib-reserved-parentHandle-cpp: |-
-  // reserved: {{ base }} cabinet parent
-  try {
-      return {{ base }}Cabinet::parent(handle);
-  } catch (...) {
-      return handleAllExceptions(-2, ERR);
-  }
-
-clib-reserved-cabinetSize-cpp: |-
-  // reserved: int Cabinet<{{ base }}>.size()
-  try {
-      return {{ base }}Cabinet::size();
-  } catch (...) {
-      return handleAllExceptions(-1, ERR);
-  }
-
-clib-reserved-getCanteraError-cpp: |-
-  // reserved: string Application::Instance()->lastErrorMessage();
-  try {
-      string err = Application::Instance()->lastErrorMessage();
-      copyString(err, buf, bufLen);
-      return int(err.size());
-  } catch (...) {
-      return handleAllExceptions(-1, ERR);
-  }
-
-clib-reserved-setLogWriter-cpp: |-
-  // reserved: setLogger
-  try {
-      Logger* logwriter = (Logger*)logger;
-      setLogger(logwriter);
-      return 0;
-  } catch (...) {
-      return handleAllExceptions(-1, ERR);
-  }
-
-clib-reserved-setLogCallback-cpp: |-
-  // reserved: setLogger
-  static unique_ptr<Logger> logwriter;
-  try {
-      logwriter = make_unique<ExternalLogger>(writer);
-      setLogger(logwriter.get());
-      return 0;
-  } catch (...) {
-      return handleAllExceptions(-1, ERR);
-  }
-
-clib-reserved-resetStorage-cpp: |-
-  // reserved: void Cabinet<T>::reset()
-  try {
-      {% for base in cabinets %}
-      {{ base }}Cabinet::reset();
-      {% endfor %}
-      return 0;
-  } catch (...) {
-      return handleAllExceptions(-1, ERR);
-  }
-
-clib-reserved-clearStorage-cpp: |-
-  // reserved: void Cabinet<T>::clear()
-  try {
-      {% for base in cabinets %}
-      {{ base }}Cabinet::clear();
-      {% endfor %}
-      return 0;
-  } catch (...) {
-      return handleAllExceptions(-1, ERR);
   }
