@@ -147,7 +147,7 @@ bool usesHDF5();
 //! @addtogroup logGroup
 //! @{
 
-//! @copydoc Application::Messages::writelog(const string&)
+//! @copydoc Application::writelog(const string&)
 void writelog_direct(const string& msg);
 
 //! Write a message to the log only if loglevel > 0
@@ -307,9 +307,16 @@ bool legacy_rate_constants_used();
 
 // @} End of globalSettings group
 
-//! @copydoc Application::Messages::setLogger
+//! @copydoc Application::setLogger(Logger*)
+//! @deprecated To be removed after %Cantera 3.2. Replaced by version taking
+//!     `unique_ptr`.
 //! @ingroup logGroup
 void setLogger(Logger* logwriter);
+
+//! @copydoc Application::setLogger(unique_ptr<Logger>)
+//! @since Changed in %Cantera 3.2 to take `unique_ptr` instead of bare pointer.
+//! @ingroup logGroup
+void setLogger(unique_ptr<Logger> logwriter);
 
 //! Enables printing a stacktrace to `std::err` if a segfault occurs. The Boost
 //! documentation says doing this from an error handler is not safe on all platforms
