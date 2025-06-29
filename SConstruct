@@ -181,6 +181,10 @@ python_max_version = parse_version("3.14")
 # The string is used to set python_requires in setup.cfg.in
 py_requires_ver_str = f">={python_min_version},<{python_max_version}"
 
+cython_version_spec = SpecifierSet(">=0.29.31,!=3.1.2", prereleases=True)
+numpy_version_spec = SpecifierSet(">=1.21.0,<3", prereleases=True)
+ruamel_version_spec = SpecifierSet(">=0.17.21,<1", prereleases=True)
+
 if "sdist" in COMMAND_LINE_TARGETS:
     if "clean" in COMMAND_LINE_TARGETS:
         COMMAND_LINE_TARGETS.remove("clean")
@@ -198,6 +202,9 @@ if "sdist" in COMMAND_LINE_TARGETS:
             py_requires_ver_str,
             cantera_version,
             cantera_short_version,
+            str(cython_version_spec),
+            str(numpy_version_spec),
+            str(ruamel_version_spec),
         ],
         check=True,
     )
@@ -1575,22 +1582,41 @@ end program main
 
 set_fortran("{}FLAGS", env["FORTRANFLAGS"])
 
-if env["using_apple_clang"] and env["f90_interface"] == "default":
+if (env["using_apple_clang"] and env["f90_interface"] == "default" and
+    not env["FORTRAN"]):
     env["f90_interface"] = "n"
 
 if env['f90_interface'] in ('y','default'):
     foundF90 = False
-    if env['FORTRAN']:
+    fortran_used = ""
+    if "mpifort" in env["FORTRAN"]:
+        foundF90 = check_fortran(env["FORTRAN"], True)
+        fortran_used = get_command_output("mpifort", "--show").split()[0]
+    elif env["FORTRAN"]:
         foundF90 = check_fortran(env['FORTRAN'], True)
+        fortran_used = env["FORTRAN"]
 
     for compiler in ("pgfortran", "gfortran", "ifort", "ifx", "g95"):
         if foundF90:
             break
+        fortran_used = compiler
         foundF90 = check_fortran(compiler)
 
     if foundF90:
         logger.info(f"Using {env['FORTRAN']!r} to build the Fortran 90 interface")
         env['f90_interface'] = 'y'
+
+        if "pgfortran" in fortran_used:
+            env["FORTRANMODDIRPREFIX"] = "-module "
+        elif "gfortran" in fortran_used:
+            env["FORTRANMODDIRPREFIX"] = "-J"
+        elif "g95" in fortran_used:
+            env["FORTRANMODDIRPREFIX"] = "-fmod="
+        elif "ifort" in fortran_used:
+            env["FORTRANMODDIRPREFIX"] = "-module "
+        elif "ifx" in fortran_used:
+            env["FORTRANMODDIRPREFIX"] = "-module "
+
     else:
         if env['f90_interface'] == 'y':
             logger.error("Could not find a suitable Fortran compiler to build the Fortran 90 interface.")
@@ -1600,20 +1626,9 @@ if env['f90_interface'] in ('y','default'):
             env['FORTRAN'] = ''
             logger.info("Skipping compilation of the Fortran 90 interface.")
 
-if 'pgfortran' in env['FORTRAN']:
-    env['FORTRANMODDIRPREFIX'] = '-module '
-elif 'gfortran' in env['FORTRAN']:
-    env['FORTRANMODDIRPREFIX'] = '-J'
-elif 'g95' in env['FORTRAN']:
-    env['FORTRANMODDIRPREFIX'] = '-fmod='
-elif 'ifort' in env['FORTRAN']:
-    env['FORTRANMODDIRPREFIX'] = '-module '
-elif "ifx" in env["FORTRAN"]:
-    env["FORTRANMODDIRPREFIX"] = "-module "
-
-set_fortran("{}", env["FORTRAN"])
-set_fortran("SH{}", env["FORTRAN"])
-env['FORTRANMODDIR'] = '${TARGET.dir}'
+    set_fortran("{}", env["FORTRAN"])
+    set_fortran("SH{}", env["FORTRAN"])
+    env["FORTRANMODDIR"] = "${TARGET.dir}"
 
 env = conf.Finish()
 
@@ -1628,17 +1643,12 @@ env['python_cmd_esc'] = quoted(env['python_cmd'])
 env["python_min_version"] = python_min_version
 env["python_max_version"] = python_max_version
 env["py_requires_ver_str"] = py_requires_ver_str
-env["cython_version_spec"] = SpecifierSet(">=0.29.31", prereleases=True)
-# When updating NumPy spec, also update interfaces/python_sdist/pyproject.toml.in.
-env["numpy_version_spec"] = SpecifierSet(">=1.21.0,<3", prereleases=True)
-env["cython_version_spec_str"] = str(env["cython_version_spec"])
-env["numpy_version_spec_str"] = str(env["numpy_version_spec"])
-
-# We choose ruamel.yaml 0.17.16 as the minimum version since it is the highest version
-# available in the Ubuntu 22.04 repositories. When updating this, also update the
-# version string in interfaces/python_sdist/pyproject.toml.in.
-env["ruamel_version_spec"] = SpecifierSet(">=0.17.16", prereleases=True)
-env["ruamel_version_spec_str"] = str(env["ruamel_version_spec"])
+env["cython_version_spec"] = cython_version_spec
+env["cython_version_spec_str"] = str(cython_version_spec)
+env["numpy_version_spec"] = numpy_version_spec
+env["numpy_version_spec_str"] = str(numpy_version_spec)
+env["ruamel_version_spec"] = ruamel_version_spec
+env["ruamel_version_spec_str"] = str(ruamel_version_spec)
 
 # Minimum pytest version assumed based on Ubuntu 20.04
 env["pytest_version_spec"] = SpecifierSet(">=4.6.9", prereleases=True)

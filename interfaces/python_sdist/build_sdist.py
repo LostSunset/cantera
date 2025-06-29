@@ -61,12 +61,20 @@ def do_configure_substitution(
 
 
 def do_pyproject_substitution(
-    pyproject_toml_source: Path, py_requires_ver_str: str, cantera_version: str
+    pyproject_toml_source: Path,
+    py_requires_ver_str: str,
+    cantera_version: str,
+    cython_version_spec: str,
+    numpy_version_spec: str,
+    ruamel_version_spec: str,
 ) -> str:
     pyproject_toml_template = pyproject_toml_source.read_text().splitlines()
     pyproject_subst = {
         "@py_requires_ver_str@": py_requires_ver_str,
         "@cantera_version@": cantera_version,
+        "@cython_version_spec@": cython_version_spec,
+        "@numpy_version_spec@": numpy_version_spec,
+        "@ruamel_version_spec@": ruamel_version_spec,
     }
     pyproject_toml_output = _substitute_lines(pyproject_toml_template, pyproject_subst)
     return "\n".join(pyproject_toml_output)
@@ -91,6 +99,9 @@ def main(
     py_requires_ver_str: str,
     cantera_version: str,
     cantera_short_version: str,
+    cython_version_spec: str,
+    numpy_version_spec: str,
+    ruamel_version_spec: str,
 ):
     src_source = source_directory / "src"
     src_target = target_directory / "src"
@@ -169,7 +180,12 @@ def main(
     pyproject_toml_target = target_directory / "pyproject.toml"
     pyproject_toml_target.write_text(
         do_pyproject_substitution(
-            pyproject_toml_source, py_requires_ver_str, cantera_version
+            pyproject_toml_source,
+            py_requires_ver_str,
+            cantera_version,
+            cython_version_spec,
+            numpy_version_spec,
+            ruamel_version_spec,
         )
     )
 
@@ -197,6 +213,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("python_version_req")
     parser.add_argument("cantera_version")
     parser.add_argument("cantera_short_version")
+    parser.add_argument("cython_version_spec")
+    parser.add_argument("numpy_version_spec")
+    parser.add_argument("ruamel_version_spec")
     args = parser.parse_args(argv)
     return args
 
@@ -210,4 +229,7 @@ if __name__ == "__main__":
         args.python_version_req,
         args.cantera_version,
         args.cantera_short_version,
+        args.cython_version_spec,
+        args.numpy_version_spec,
+        args.ruamel_version_spec,
     )
